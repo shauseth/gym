@@ -2,8 +2,8 @@ import numpy as np
 
 class SarsaLambdaAgent:
 
-    def __init__(self, tilecoder):
-        self.num_actions = None
+    def __init__(self, num_actions, tilecoder):
+        self.num_actions = num_actions
         self.tilecoder = tilecoder
         self.iht_size = tilecoder.iht.size
         self.epsilon = None
