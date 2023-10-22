@@ -1,7 +1,27 @@
 import numpy as np
 
-class SarsaLambdaAgent:
+class TDZeroAgent:
+    """Tabular TD(0) for estimating v_pi"""
+    def __init__(self, n_states):
+        self.alpha = None
+        self.gamma = None
+        self.values = np.zeros(n_states)
+        self.last_state = None
 
+    def start(self, state):
+        self.last_state = state
+
+    def step(self, state, reward):
+        delta = reward + self.gamma * self.values[state] - self.values[self.last_state]
+        self.values[self.last_state] += self.alpha * delta
+        self.last_state = state
+
+    def end(self, reward):
+        delta = reward - self.values[self.last_state]
+        self.values[self.last_state] += self.alpha * delta
+
+class SarsaLambdaAgent:
+    """Sarsa(λ) with binary features and linear function approximation for estimating q_pi"""
     def __init__(self, num_actions, tilecoder):
         self.num_actions = num_actions
         self.tilecoder = tilecoder
