@@ -20,6 +20,100 @@ class TDZeroAgent:
         delta = reward - self.values[self.last_state]
         self.values[self.last_state] += self.alpha * delta
 
+class QAgent:
+    """Q-Learning with binary features and linear function approximation for estimating q_pi"""
+    def __init__(self, num_actions, tilecoder):
+        self.num_actions = num_actions
+        self.tilecoder = tilecoder
+        self.iht_size = tilecoder.iht.size
+        self.epsilon = None
+        self.gamma = None
+        self.alpha = None
+        self.w = np.zeros([self.num_actions, self.iht_size])
+        self.last_action = None
+        self.last_tiles = None
+
+    def select_action(self, tiles):
+        if np.random.random() > self.epsilon:
+            action = self.w[:, tiles].sum(axis=1).argmax()
+        else:
+            action = np.random.choice(self.num_actions)
+        return action
+    
+    def start(self, state):
+        tiles = self.tilecoder.get_tiles(state)
+        action = self.select_action(tiles)
+        self.last_action = action
+        self.last_tiles = tiles.copy()
+        return self.last_action
+    
+    def step(self, state, reward):
+        tiles = self.tilecoder.get_tiles(state)
+        action = self.select_action(tiles)
+
+        last_value = self.w[self.last_action][self.last_tiles].sum()
+
+        greedy_action = self.w[:, tiles].sum(axis=1).argmax()
+        greedy_value = self.w[greedy_action][tiles].sum()
+
+        delta = reward + self.gamma * greedy_value - last_value
+        self.w[self.last_action][self.last_tiles] += self.alpha * delta
+
+        self.last_action = action
+        self.last_tiles = tiles.copy()
+        return self.last_action
+    
+    def end(self, reward):
+        last_value = self.w[self.last_action][self.last_tiles].sum()
+        delta = reward - last_value
+        self.w[self.last_action][self.last_tiles] += self.alpha * delta
+
+class SarsaAgent:
+    """Sarsa with binary features and linear function approximation for estimating q_pi"""
+    def __init__(self, num_actions, tilecoder):
+        self.num_actions = num_actions
+        self.tilecoder = tilecoder
+        self.iht_size = tilecoder.iht.size
+        self.epsilon = None
+        self.gamma = None
+        self.alpha = None
+        self.w = np.zeros([self.num_actions, self.iht_size])
+        self.last_action = None
+        self.last_tiles = None
+
+    def select_action(self, tiles):
+        if np.random.random() > self.epsilon:
+            action_values = self.w[:, tiles].sum(axis=1)
+            action = action_values.argmax()
+        else:
+            action = np.random.choice(self.num_actions)
+        return action
+    
+    def start(self, state):
+        tiles = self.tilecoder.get_tiles(state)
+        action = self.select_action(tiles)
+        self.last_action = action
+        self.last_tiles = tiles.copy()
+        return self.last_action
+    
+    def step(self, state, reward):
+        tiles = self.tilecoder.get_tiles(state)
+        action = self.select_action(tiles)
+
+        last_value = self.w[self.last_action][self.last_tiles].sum()
+        current_value = self.w[action][tiles].sum()
+        delta = reward + self.gamma * current_value - last_value
+        self.w[self.last_action][self.last_tiles] += self.alpha * delta
+
+        self.last_action = action
+        self.last_tiles = tiles.copy()
+        return self.last_action
+    
+    def end(self, reward):
+        last_value = self.w[self.last_action][self.last_tiles].sum()
+        delta = reward - last_value
+        self.w[self.last_action][self.last_tiles] += self.alpha * delta
+
 class SarsaLambdaAgent:
     """Sarsa(λ) with binary features and linear function approximation for estimating q_pi"""
     def __init__(self, num_actions, tilecoder):
